@@ -1,0 +1,118 @@
+package client;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Scanner;
+
+public class ClientCode
+{
+	public static void main(String[] args)
+	{
+		String serverIp = "";
+		int serverPort = -1;
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Please enter server ip: ");
+		serverIp = sc.nextLine();
+		System.out.println("Please enter server port: ");
+		serverPort = Integer.parseInt(sc.nextLine());
+		try
+		{
+			Socket clientSideSocket = new Socket(serverIp, serverPort);
+			DataInputStream ipStream = new DataInputStream(clientSideSocket.getInputStream());
+			DataOutputStream opStream = new DataOutputStream(clientSideSocket.getOutputStream());
+			
+			System.out.println("Please enter the operation that you want to perform");
+			System.out.println("1. Get file from server --> Get fileName");
+			System.out.println("2. Put file to server --> Put fileName");
+			System.out.println("3. Quit");
+			
+			while(true)
+			{
+				String userInput = sc.nextLine();
+				if(userInput.equals("") || userInput.isEmpty() || userInput.equalsIgnoreCase("quit"))
+				{
+					opStream.writeUTF(userInput);
+					clientSideSocket.close();
+					return;
+				}
+				else
+				{
+					String[] input = userInput.split(" ");
+					String fileName = input[1];
+					if(input[0].equalsIgnoreCase("get"))
+					{
+						opStream.writeUTF(userInput);
+						String fileContent = ipStream.readUTF();
+						boolean getFileFromServer = getFileFromServer(fileName, fileContent);
+						if(getFileFromServer)
+							System.out.println("File Download SuccessFul: " + fileName);
+						else
+							System.out.println("Error in downloading file: " + fileName);
+						opStream.flush();
+					}
+					else if(input[0].equalsIgnoreCase("put"))
+					{
+
+						String fileContent = readDataFromFile(fileName);
+						if(fileContent.isEmpty() || fileContent.trim().equals(""))
+							System.out.println("File not found or some error in reading file");
+						else
+						{
+							opStream.writeUTF(fileContent);
+						}
+						opStream.flush();
+						System.out.println("File successfully uploaded to server: " +fileName);
+					
+					}
+					else
+					{
+						System.out.println("Invalid input... Please enter again");
+						opStream.writeUTF("Invalid input... Please enter again");
+						opStream.flush();
+					}
+				}
+			}
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	private static String readDataFromFile(String fileName)
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private static boolean getFileFromServer(String fileName, String fileContent)
+	{
+		boolean fileWrite = false;
+		if(fileContent.equals("") || fileContent.isEmpty())
+		{
+			return fileWrite;
+		}
+		File newFile = new File(fileName);
+		try
+		{
+			newFile.createNewFile();
+			BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
+			out.write(fileContent);
+			out.close();
+			System.out.println("File write done. File path is: " + newFile.getAbsolutePath());
+			fileWrite = true;
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return fileWrite;
+	}
+}

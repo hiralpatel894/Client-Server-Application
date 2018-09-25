@@ -1,0 +1,179 @@
+package server;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+
+public class Server
+{
+
+	private static final int port = 4700;
+	private static Socket socketObj;
+
+	public static void main(String[] args)
+	{
+		int clientNo = 1;
+		try
+		{
+			System.out.println("Starting server...");
+			ServerSocket serverSocketListener = new ServerSocket(port);
+			System.out.println("Server listening from port no : " + port);
+			while (true)
+			{
+				System.out.println("Waiting for clients to connect");
+				socketObj = serverSocketListener.accept();
+				System.out.println("Server is now connected to client " + clientNo);
+				clientNo++;
+				// creating a separate method to take care of the newly connected client
+				serviceClient(socketObj);
+			}
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private static void serviceClient(Socket socketObj)
+	{
+		// create a new thread for the client
+		boolean isThreadAlive = false;
+		try
+		{
+			DataInputStream ipStream = (DataInputStream) socketObj.getInputStream();
+			DataOutputStream opStream = (DataOutputStream) socketObj.getOutputStream();
+			isThreadAlive = true;
+			startNewThread(isThreadAlive, ipStream, opStream);
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private static void startNewThread(boolean isThreadAlive, DataInputStream ipStream, DataOutputStream opStream)
+	{
+		// TODO Auto-generated method stub
+		Thread newRunnableThread = new Thread()
+		{
+			public void run()
+			{
+				System.out.println("Providing service to client...");
+				String inputFromUser = "";
+				while (true)
+				{
+					try
+					{
+						inputFromUser = ipStream.readUTF();
+						if (inputFromUser.trim().equalsIgnoreCase("Quit") || inputFromUser.trim().equals("")
+								|| inputFromUser.isEmpty())
+						{
+							socketObj.close();
+							System.out.println("Disconnecting client from server...");
+							return;
+						}
+
+						else
+						{
+							String[] ipUser = inputFromUser.trim().split(" ");
+							String fileName = ipUser[1];
+							if (ipUser[0].equalsIgnoreCase("get"))
+							{
+								String fileContent = readDataFromFile(fileName);
+								if(fileContent.isEmpty() || fileContent.trim().equals(""))
+									System.out.println("File not found or some error in reading file");
+								else
+								{
+									opStream.writeUTF(fileContent);
+								}
+								opStream.flush();
+								System.out.println("File successfully sent to client: " +fileName);
+							} else if (ipUser[0].equalsIgnoreCase("put"))
+							{
+								String fileContent = ipStream.readUTF();
+								boolean writeFileToServer = writeFileToServer(fileName, fileContent);
+								if(writeFileToServer)
+									System.out.println("File Write SuccessFul: " + fileName);
+								else
+									System.out.println("Error in writinf file: " + fileName);
+								opStream.flush();
+							} else
+							{
+								System.out.println("Invalid input... Please enter again");
+								opStream.writeUTF("Invalid input... Please enter again");
+								opStream.flush();
+							}
+						}
+
+					} catch (IOException e)
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+
+	}
+
+	protected static boolean writeFileToServer(String fileName, String fileContent)
+	{
+		boolean fileWrite = false;
+		if(fileContent.equals("") || fileContent.isEmpty())
+		{
+			return fileWrite;
+		}
+		File newFile = new File(fileName);
+		try
+		{
+			newFile.createNewFile();
+			BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
+			out.write(fileContent);
+			out.close();
+			System.out.println("File write done. File path is: " + newFile.getAbsolutePath());
+			fileWrite = true;
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return fileWrite;
+	}
+
+	public static String readDataFromFile(String fileName)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		File newGetFile = new File(fileName);
+		try
+		{
+			System.out.println("Reading data from file: " + fileName);
+			BufferedReader in = new BufferedReader(new FileReader(newGetFile));
+			String nextLine = "";
+			while((nextLine = in.readLine()) != null)
+			{
+				stringBuilder.append(nextLine + "\n");
+			}
+			in.close();
+		} catch (FileNotFoundException e)
+		{
+			System.out.println("File not found " + fileName);
+		} catch (IOException e)
+		{
+			System.out.println("Error in reading file " + fileName);
+		}
+		
+		
+		return stringBuilder.toString();
+		
+	}
+}

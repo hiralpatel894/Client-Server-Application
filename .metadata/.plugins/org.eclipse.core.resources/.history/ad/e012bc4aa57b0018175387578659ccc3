@@ -1,0 +1,9 @@
+package client;
+
+public class ClientCode
+{
+	public static void main(String[] args)
+	{
+		
+	}
+}

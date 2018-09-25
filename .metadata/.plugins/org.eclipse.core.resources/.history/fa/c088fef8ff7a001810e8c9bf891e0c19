@@ -1,0 +1,61 @@
+package server;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+
+	private static final int port = 4700;
+	private static Socket socketObj;
+
+	public static void main(String[] args) {
+		int clientNo = 1;
+		try {
+			System.out.println("Starting server...");
+			ServerSocket serverSocketListener = new ServerSocket(port);
+			System.out.println("Server listening from port no : " +port);
+			while(true)
+			{
+				System.out.println("Waiting for clients to connect");
+				socketObj = serverSocketListener.accept();
+				System.out.println("Server is now connected to client " + clientNo);
+				clientNo++;
+				//creating a separate method to take care of the newly connected client 
+				serviceClient(socketObj);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void serviceClient(Socket socketObj) {
+		// create a new thread for the client
+		boolean isThreadAlive = false;
+		try {
+			InputStream ipStream = socketObj.getInputStream();
+			OutputStream opStream = socketObj.getOutputStream();
+			isThreadAlive = true;
+			startNewThread(isThreadAlive, ipStream, opStream);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private static void startNewThread(boolean isThreadAlive, InputStream ipStream, OutputStream opStream) {
+		// TODO Auto-generated method stub
+		Thread newRunnableThread = new Thread()
+		{
+			public void run()
+			{
+				System.out.println("Providing service to client...");
+			}
+		}
+		
+		
+	}
+
+}

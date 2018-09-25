@@ -1,0 +1,82 @@
+package server;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+
+public class ServerSideThread extends Thread
+{
+
+	
+	private Socket clientSocket;
+	private DataInputStream ipStream;
+	private DataOutputStream opStream;
+	public ServerSideThread(Socket socketObj, DataInputStream ipStream, DataOutputStream opStream)
+	{
+		// TODO Auto-generated constructor stub
+		this.clientSocket = socketObj;
+		this.ipStream = ipStream;
+		this.opStream = opStream;
+	}
+
+	
+	public void run()
+	{
+
+		System.out.println("Providing service to client...");
+		String inputFromUser = "";
+		while (true)
+		{
+			try
+			{
+				inputFromUser = ipStream.readUTF();
+				if (inputFromUser.trim().equalsIgnoreCase("Quit") || inputFromUser.trim().equals("")
+						|| inputFromUser.isEmpty())
+				{
+					socketObj.close();
+					System.out.println("Disconnecting client from server...");
+					return;
+				}
+
+				else
+				{
+					String[] ipUser = inputFromUser.trim().split(" ");
+					String fileName = ipUser[1];
+					if (ipUser[0].equalsIgnoreCase("get"))
+					{
+						String fileContent = readDataFromFile(fileName);
+						if(fileContent.isEmpty() || fileContent.trim().equals(""))
+							System.out.println("File not found or some error in reading file");
+						else
+						{
+							opStream.writeUTF(fileContent);
+						}
+						opStream.flush();
+						System.out.println("File successfully sent to client: " +fileName);
+					} else if (ipUser[0].equalsIgnoreCase("put"))
+					{
+						String fileContent = ipStream.readUTF();
+						boolean writeFileToServer = writeFileToServer(fileName, fileContent);
+						if(writeFileToServer)
+							System.out.println("File Write SuccessFul: " + fileName);
+						else
+							System.out.println("Error in writinf file: " + fileName);
+						opStream.flush();
+					} else
+					{
+						System.out.println("Invalid input... Please enter again");
+						opStream.writeUTF("Invalid input... Please enter again");
+						opStream.flush();
+					}
+				}
+
+			} catch (IOException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	
+	}
+}

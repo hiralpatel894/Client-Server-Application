@@ -1,0 +1,10 @@
+package server;
+
+public class Server {
+
+	private static final int PORT = 4700;
+	public static void main(String[] args) {
+		
+	}
+
+}

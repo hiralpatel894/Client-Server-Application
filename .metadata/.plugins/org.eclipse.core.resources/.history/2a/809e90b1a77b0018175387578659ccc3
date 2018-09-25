@@ -1,0 +1,38 @@
+package client;
+
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Scanner;
+
+public class ClientCode
+{
+	public static void main(String[] args)
+	{
+		String serverIp = "";
+		int serverPort = -1;
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Please enter server ip: ");
+		serverIp = sc.nextLine();
+		System.out.println("Please enter server port: ");
+		serverPort = Integer.parseInt(sc.nextLine());
+		try
+		{
+			Socket clientSideSocket = new Socket(serverIp, serverPort);
+			DataInputStream ipStream = new DataInputStream(clientSideSocket.getInputStream());
+			DataOutputStream opStream = new DataOutputStream(clientSideSocket.getOutputStream());
+			
+			System.out.println("Please enter the operation that you want to perform");
+			System.out.println("1. Get file from server --> Get fileName");
+			System.out.println("2. Put file to server --> Put fileName");
+			System.out.println("3. Quit");
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+}

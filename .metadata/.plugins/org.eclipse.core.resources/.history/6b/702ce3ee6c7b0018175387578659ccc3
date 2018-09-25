@@ -1,0 +1,120 @@
+package server;
+
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+
+public class Server
+{
+
+	private static final int port = 4700;
+	private static Socket socketObj;
+
+	public static void main(String[] args)
+	{
+		int clientNo = 1;
+		try
+		{
+			System.out.println("Starting server...");
+			ServerSocket serverSocketListener = new ServerSocket(port);
+			System.out.println("Server listening from port no : " + port);
+			while (true)
+			{
+				System.out.println("Waiting for clients to connect");
+				socketObj = serverSocketListener.accept();
+				System.out.println("Server is now connected to client " + clientNo);
+				clientNo++;
+				// creating a separate method to take care of the newly connected client
+				serviceClient(socketObj);
+			}
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private static void serviceClient(Socket socketObj)
+	{
+		// create a new thread for the client
+		boolean isThreadAlive = false;
+		try
+		{
+			DataInputStream ipStream = (DataInputStream) socketObj.getInputStream();
+			DataOutputStream opStream = (DataOutputStream) socketObj.getOutputStream();
+			isThreadAlive = true;
+			startNewThread(isThreadAlive, ipStream, opStream);
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private static void startNewThread(boolean isThreadAlive, DataInputStream ipStream, DataOutputStream opStream)
+	{
+		// TODO Auto-generated method stub
+		Thread newRunnableThread = new Thread()
+		{
+			public void run()
+			{
+				System.out.println("Providing service to client...");
+				String inputFromUser = "";
+				while (true)
+				{
+					try
+					{
+						inputFromUser = ipStream.readUTF();
+						if (inputFromUser.trim().equalsIgnoreCase("Quit") || inputFromUser.trim().equals("") || inputFromUser.isEmpty())
+						{
+							socketObj.close();
+							System.out.println("Disconnecting client from server...");
+							return;
+						}
+						
+						else
+						{
+							String[] ipUser = inputFromUser.trim().split(" ");
+							String fileName = ipUser[1];
+							if(ipUser[0].equalsIgnoreCase("get"))
+							{
+								
+							}
+							else if(ipUser[0].equalsIgnoreCase("put"))
+							{
+								RandomAccessFile fileToPut = null;
+								File newFile = new File(fileName);
+								fileToPut = new RandomAccessFile(newFile, "r");
+								FileChannel ipFileChannel = fileToPut.getChannel();
+								ByteBuffer writeBuffer = ByteBuffer.allocate(1024);
+								while(ipFileChannel.read(writeBuffer) > 0)
+								{
+									writeBuffer.flip();
+									ipFileChannel.write(writeBuffer);
+									writeBuffer.clear();
+								}
+							}
+							else
+							{
+								System.out.println("Invalid input... Please enter again");
+							}
+						}
+						
+					} catch (IOException e)
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+
+			}
+		};
+
+	}
+
+}

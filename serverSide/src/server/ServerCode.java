@@ -1,0 +1,52 @@
+package server;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class ServerCode
+{
+
+	private static final int port = 4700;
+	
+
+	public static void main(String[] args)
+	{
+		int clientNo = 1;
+		try
+		{
+			System.out.println("Starting server...");
+			ServerSocket serverSocketListener = new ServerSocket(port);
+			Socket socketObj;
+			System.out.println("Server listening from port no : " + port);
+			while (true)
+			{
+				System.out.println("Waiting for clients to connect");
+				socketObj = serverSocketListener.accept();
+				System.out.println("Server is now connected to client " + clientNo);
+				clientNo++;
+				// creating a separate method to take care of the newly connected client
+				serviceClient(socketObj);
+			}
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private static void serviceClient(Socket socketObj)
+	{
+		// create a new thread for the client
+		try
+		{
+			new ServerSideThread(socketObj).start();
+			Thread.sleep(10);
+		} catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

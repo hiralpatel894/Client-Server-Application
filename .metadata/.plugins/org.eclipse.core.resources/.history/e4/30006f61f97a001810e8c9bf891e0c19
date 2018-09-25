@@ -1,0 +1,29 @@
+package server;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+
+	private static final int port = 4700;
+	private static Socket socketObj;
+
+	public static void main(String[] args) {
+		int clientNo = 1;
+		try {
+			System.out.println("Starting server...");
+			ServerSocket serverSocketListener = new ServerSocket(port);
+			System.out.println("Server listening from port no : " +port);
+			while(true)
+			{
+				socketObj = serverSocketListener.accept();
+				System.out.println("Server is now connected to client " + clientNo);
+				clientNo++;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+}
